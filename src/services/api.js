@@ -30,6 +30,20 @@ const apiClient = axios.create({
                     Authorization: `Bearer ${token}`
                 }
             })
+        },
+        getProject(projectId, token) {
+            return apiClient.get(`/projects/${projectId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+        },
+        deleteProject(projectId, token) {
+            return apiClient.delete(`/projects/${projectId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            })
         }
 
 

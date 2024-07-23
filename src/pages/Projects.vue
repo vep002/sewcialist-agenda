@@ -4,11 +4,15 @@
 
     <hr>
     <GanttChart :tasks="tasks" />
+    <hr>
+    <button @click="handleLogout">Logout</button>
     <ul>
       <li v-for="project in projects" :key="project.id" :project="project">
         <p>{{ project.name }}</p>
         <p>{{ project.description }}</p>
         <p>{{ project.status }}</p>
+        <button @click="editProject(project.id)">Edit</button>
+        <button @click="deleteProject(project.id)">Delete</button>
         <ol>
           <li v-for="step in project.steps" :key="step.id">
             <p>{{ step.description }}</p>
@@ -68,12 +72,29 @@ export default {
           project.steps.map(step => ({
             id: step.id,
             name: step.description, 
-            start: step.start_date, 
-            end: step.end_date,
-            progress: step.completed ? 100 : 0
+            start: this.formatDate(step.start_date), 
+            end: this.formatDate(step.end_date),
+            progress: step.completed ? 100 : 0,
+            dependencies: []
           }))
           )
-        console.log(this.tasks)  
+      },
+      formatDate(date) {
+        if (!date) return null
+        return new Date(date).toISOString().split('T')[0]
+      },
+      async deleteProject(projectId) {
+        try {
+          const token = localStorage.getItem('authToken')
+          await api.deleteProject(projectId, token)
+          this.fetchProjects() // Refresh the list of projects
+        } catch (error) {
+          this.error = 'Error deleting project: ' + error.response.data.message
+          console.error('Error deleting project:', error)
+        }
+      },
+      editProject(projectId) {
+        this.$router.push(`/projects/${projectId}`)
       }
     }
   }

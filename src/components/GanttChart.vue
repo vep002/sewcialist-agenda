@@ -23,6 +23,7 @@ export default {
     },
     methods: {
         renderGantt() {
+            if (this.tasks.length === 0) return
             this.gantt = new Gantt(this.$refs.gantt, this.tasks, {
                 on_click: (task) => {
                     console.log(task)

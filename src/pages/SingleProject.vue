@@ -1,50 +1,76 @@
 <template>
     <div>
-        <h1>Edit Project</h1>
-        <form @submit.prevent="updateProject">
-            <div>
-                <label for="title">Project Title:</label>
-                <input id="title" v-mmodel="project.title" type="text" required>
-            </div>
-            <div>
-                <label for="description">Project Description:</label>
-                <textarea id="description" v-model="project.description" required></textarea>
-            </div>
-            <div>
-                <label for="status">Project Status:</label>
-                <select id="status" v-model="project.status" required>
-                    <option value="0">Not Started</option>
-                    <option value="1">In Progress</option>
-                    <option value="2">Completed</option>
-                </select>
-            </div>
-            <button type="submit">Save</button>
-        </form>
+        <h1>{{  project.title  }}</h1>
+        <button @click="openEditProjectModal">Edit</button>
         <p>{{ project.description }}</p>
         <p>{{ project.status }}</p>
 
         <h2>Steps</h2>
         <ol>
-        <li v-for="step in project.steps" :key="step.id">
-            <p>{{ step.description }}</p>
-            <p>{{ step.start_date }}</p>
-            <p>{{ step.end_date }}</p>
-            <p>{{ step.completed }}</p>
-            <button @click="editStep(step.id)">Edit Step</button>
-            <button @click="deleteStep(step.id)">Delete Step</button>
-        </li>
+            <li v-for="step in project.steps" :key="step.id">
+                <p>{{ step.description }}</p>
+                <p>{{ step.start_date }}</p>
+                <p>{{ step.end_date }}</p>
+                <p>{{ step.completed }}</p>
+            </li>
         </ol>
-        <button @click="addStep">Add Step</button>
+        <button @click="openEditStepModal(null)">Edit Steps</button>
+
         <h2>Materials</h2>
         <ul>
             <li v-for="material in project.materials" :key="material.id">
                 <div>
                     <p>{{ material.name }}</p>
-                    <button @click="editMaterial(material.id)">Edit Material</button>
-                    <button @click="deleteMaterial(material.id)">Delete Material</button>
+                </div>
             </li>
         </ul>
-        <button @click="addMaterial">Add Material</button>
+        <button @click="openEditMaterialModal(null)">Edit Materials</button>
+
+        <Modal :isModalOpen="isEditProjectModalOpen" @close="closeModals">
+            <form @submit.prevent="saveProject">
+            <h1>Edit Project</h1>
+                <div>
+                    <label for="title">Project Title:</label>
+                    <input id="title" v-model="project.title" type="text" required>
+                </div>
+                <div>
+                    <label for="description">Project Description:</label>
+                    <textarea id="description" v-model="project.description" required></textarea>
+                </div>
+                <div>
+                    <label for="status">Project Status:</label>
+                    <select id="status" v-model="project.status" required>
+                        <option value="0">Not Started</option>
+                        <option value="1">In Progress</option>
+                        <option value="2">Completed</option>
+                    </select>
+                </div>
+                <button type="submit">Save</button>
+            </form>
+        </Modal>
+
+        <Modal :isModalOpen="isEditStepModalOpen" @close="closeModals">
+            <form @submit.prevent="saveStep">
+                <!-- Step Edit Form -->
+                <input v-model="editingStep.description" type="text" required />
+                <input v-model="editingStep.start_date" type="date" />
+                <input v-model="editingStep.end_date" type="date" />
+                <label>
+                    <input type="checkbox" v-model="editingStep.completed" /> Completed
+                </label>
+                <button type="submit">Save</button>
+                <button @click="deleteStep(editingStep.id)" v-if="editingStep.id">Delete</button>
+            </form>
+        </Modal>
+
+        <Modal :isModalOpen="isEditMaterialModalOpen" @close="closeModals">
+            <form @submit.prevent="saveMaterial">
+                <!-- Material Edit Form -->
+                <input v-model="editingMaterial.name" type="text" required />
+                <button type="submit">Save</button>
+                <button @click="deleteMaterial(editingMaterial.id)" v-if="editingMaterial.id">Delete</button>
+            </form>
+        </Modal> 
     </div>
 </template>
 
@@ -54,6 +80,11 @@ import api from '@/services/api'
 export default {
     data() {
         return {
+            isEditProjectMopen: false,
+            isEditStepModalOpen: false,
+            isEditMaterialModalOpen: false,
+            editingStep: null,
+            editingMaterial: null,
             project: {
                 title: '',
                 description: '',
@@ -72,7 +103,7 @@ export default {
         async fetchProject() {
             try {
                 const token = localStorage.getItem('authToken')
-                const projectId = this.$route.params.projectId
+                const projectId = this.$route.params.projectID
                 const response = await api.getProject(projectId, token)
                 this.project = response.data
             } catch (error) {
@@ -80,35 +111,49 @@ export default {
                 console.error('Error fetching project:', error)
             }
         },
-        async updateProject() {
+        openEditProjectModal() {
+            this.isEditProjectModalOpen = true
+        },
+        openEditStepModal(step) {
+            this.editingStep = step || { description: '', start_date: '', end_date: '', completed: false }
+            this.isEditStepModalOpen = true
+        },
+        openEditMaterialModal(material) {
+            this.editingMaterial = material || { name: '' }
+            this.isEditMaterialModalOpen = true
+        },
+        closeModals() {
+            this.isEditProjectModalOpen = false
+            this.isEditStepModalOpen = false
+            this.isEditMaterialModalOpen = false
+        },
+        async saveProject() {
             try {
+                const projectId = this.$route.params.projectID
                 const token = localStorage.getItem('authToken')
-                const projectId = this.$route.params.projectId
                 const response = await api.updateProject(projectId, this.project, token)
                 this.project = response.data
+                this.$toast.success('Project updated successfully')
+                this.isEditProjectMopen = false
             } catch (error) {
-                this.error = 'Error updating project: ' + error.response.data.message
                 console.error('Error updating project:', error)
+                this.error = "Failed to update project. Please try again."
+                this.$toast.error('Error updating project. Please try again.');
             }
         },
-        editStep(stepId) {
-            this.$router.push({ name: 'EditStep', params: { stepId } })
-        },
-        deleteStep(stepId) {
-            // Implement delete step functionality
-        },
-        addStep() {
-            this.$router.push({ name: 'AddStep', params: { projectId: this.project.id } })
-        },
-        editMaterial(materialId) {
-            this.$router.push({ name: 'EditMaterial', params: { materialId } })
-        },
-        deleteMaterial(materialId) {
-            // Implement delete material functionality
-        },
-        addMaterial() {
-            this.$router.push({ name: 'AddMaterial', params: { projectId: this.project.id } })
-        }
+        saveStep() {},
+        saveMaterial() {},
+        // async updateProject() {
+        //     try {
+        //         const token = localStorage.getItem('authToken')
+        //         const projectId = this.$route.params.projectId
+        //         const response = await api.updateProject(projectId, this.project, token)
+        //         this.project = response.data
+        //     } catch (error) {
+        //         this.error = 'Error updating project: ' + error.response.data.message
+        //         console.error('Error updating project:', error)
+        //     }
+        // },
     }
 }
 </script>

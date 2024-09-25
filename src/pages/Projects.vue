@@ -94,6 +94,7 @@ export default {
         }
       },
       editProject(projectId) {
+        console.log('Editing project with ID:', projectId); 
         this.$router.push(`/projects/${projectId}`)
       }
     }

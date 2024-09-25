@@ -44,6 +44,13 @@ const apiClient = axios.create({
                 Authorization: `Bearer ${token}`
               }
             })
+        },
+        updateProject(projectId, projectData, token) {
+            return apiClient.put(`/projects/${projectId}`, { project: projectData }, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            })
         }
 
 

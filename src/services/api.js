@@ -46,12 +46,19 @@ const apiClient = axios.create({
             })
         },
         updateProject(projectId, projectData, token) {
-            return apiClient.put(`/projects/${projectId}`, { project: projectData }, {
+            return apiClient.patch(`/projects/${projectId}`, { project: projectData }, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            })
+        },
+
+        deleteStep(projectId, stepId, token) {
+            return apiClient.delete(`projects/${projectId}/steps/${stepId}`, {
               headers: {
                 Authorization: `Bearer ${token}`
               }
             })
         }
-
 
     }

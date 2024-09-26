@@ -11,8 +11,6 @@
         <p>{{ project.name }}</p>
         <p>{{ project.description }}</p>
         <p>{{ project.status }}</p>
-        <button @click="editProject(project.id)">Edit</button>
-        <button @click="deleteProject(project.id)">Delete</button>
         <ol>
           <li v-for="step in project.steps" :key="step.id">
             <p>{{ step.description }}</p>
@@ -21,6 +19,8 @@
             <p>{{ step.completed }}</p>
           </li>
         </ol>
+        <button @click="editProject(project.id)">Edit</button>
+        <button @click="deleteProject(project.id)">Delete</button>
       </li>
     </ul>
   </div>

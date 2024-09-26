@@ -1,5 +1,6 @@
 <template>
     <div>
+        <button @click="backToProjectList">Back to Project List</button>
         <h1>{{  project.title  }}</h1>
         <button @click="openEditProjectModal">Edit</button>
         <p>{{ project.description }}</p>
@@ -12,6 +13,7 @@
                 <p>{{ step.start_date }}</p>
                 <p>{{ step.end_date }}</p>
                 <p>{{ step.completed }}</p>
+                <button @click="deleteStep(project.id, step.id)">Delete</button>
             </li>
         </ol>
         <button @click="openEditStepModal(null)">Edit Steps</button>
@@ -52,9 +54,15 @@
         <Modal :isModalOpen="isEditStepModalOpen" @close="closeModals">
             <form @submit.prevent="saveStep">
                 <!-- Step Edit Form -->
-                <input v-model="editingStep.description" type="text" required />
-                <input v-model="editingStep.start_date" type="date" />
-                <input v-model="editingStep.end_date" type="date" />
+                 <label>
+                    <input v-model="editingStep.description" type="text" required/> Description
+                 </label>
+                 <label>
+                    <input v-model="editingStep.start_date" type="date" /> Start Date
+                 </label>
+                 <label>
+                    <input v-model="editingStep.end_date" type="date" /> End Date
+                 </label>
                 <label>
                     <input type="checkbox" v-model="editingStep.completed" /> Completed
                 </label>
@@ -80,6 +88,7 @@ import api from '@/services/api'
 export default {
     data() {
         return {
+            userId: '',
             isEditProjectMopen: false,
             isEditStepModalOpen: false,
             isEditMaterialModalOpen: false,
@@ -100,12 +109,17 @@ export default {
         await this.fetchProject()
     },
     methods: {
+        backToProjectList() {
+            this.$router.push(`/users/${this.userId}/projects`)
+        },
         async fetchProject() {
             try {
                 const token = localStorage.getItem('authToken')
                 const projectId = this.$route.params.projectID
                 const response = await api.getProject(projectId, token)
                 this.project = response.data
+                this.userId = response.data.user_id
+                console.log('UserId:', this.userId)
             } catch (error) {
                 this.error = 'Error fetching project: ' + error.response.data.message
                 console.error('Error fetching project:', error)
@@ -133,12 +147,21 @@ export default {
                 const token = localStorage.getItem('authToken')
                 const response = await api.updateProject(projectId, this.project, token)
                 this.project = response.data
-                this.$toast.success('Project updated successfully')
-                this.isEditProjectMopen = false
+                this.isEditProjectModalOpen = false
             } catch (error) {
                 console.error('Error updating project:', error)
                 this.error = "Failed to update project. Please try again."
-                this.$toast.error('Error updating project. Please try again.');
+
+            }
+        },
+        async deleteStep(projectId, stepId) {
+            try {
+                const token = localStorage.getItem('authToken')
+                await api.deleteStep(projectId, stepId, token)
+                this.project.steps = this.project.steps.filter(step => step.id !== stepId)
+            } catch (error) {
+                this.error = 'Error deleting step: ' + error.response.data.message
+                console.error('Error deleting step:', error)
             }
         },
         saveStep() {},

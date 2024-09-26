@@ -53,12 +53,29 @@ const apiClient = axios.create({
             })
         },
 
+        addStep(projectId, stepData, token) {
+            console.log("Project ID being passed to post url: ", projectId)
+            return apiClient.post(`/projects/${projectId}/steps`, { step: stepData }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+        },
+
         deleteStep(projectId, stepId, token) {
             return apiClient.delete(`projects/${projectId}/steps/${stepId}`, {
               headers: {
                 Authorization: `Bearer ${token}`
               }
             })
-        }
+        },
+
+        updateStep(projectId, stepId, stepData, token) {
+            return apiClient.patch(`projects/${projectId}/steps/${stepId}`, { step: stepData }, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            })
+        },
 
     }

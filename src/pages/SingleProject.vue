@@ -9,14 +9,29 @@
         <h2>Steps</h2>
         <ol>
             <li v-for="step in project.steps" :key="step.id">
-                <p>{{ step.description }}</p>
-                <p>{{ step.start_date }}</p>
-                <p>{{ step.end_date }}</p>
-                <p>{{ step.completed }}</p>
+                <form @submit.prevent="updateStep(step)">
+                    <label>
+                        Description:
+                        <input v-model="step.description" type="text" required/>
+                    </label>
+                    <label>
+                        Start Date:
+                        <input v-model="step.start_date" type="date" />
+                    </label>
+                    <label>
+                        End Date:
+                        <input v-model="step.end_date" type="date" />
+                    </label>
+                    <label>
+                        Completed:
+                        <input type="checkbox" v-model="step.completed" /> 
+                    </label>
+                    <button type="submit">Update Step</button>
+                </form>
                 <button @click="deleteStep(project.id, step.id)">Delete</button>
             </li>
         </ol>
-        <button @click="openEditStepModal(null)">Edit Steps</button>
+        <button @click="openAddStepModal(null)">Add Step</button>
 
         <h2>Materials</h2>
         <ul>
@@ -51,23 +66,26 @@
             </form>
         </Modal>
 
-        <Modal :isModalOpen="isEditStepModalOpen" @close="closeModals">
-            <form @submit.prevent="saveStep">
+        <Modal :isModalOpen="isAddStepModalOpen" @close="closeModals">
+            <form @submit.prevent="addStep(newStepData)">
                 <!-- Step Edit Form -->
                  <label>
-                    <input v-model="editingStep.description" type="text" required/> Description
+                    Description:
+                    <input v-model="newStepData.description" type="text" required/> 
                  </label>
                  <label>
-                    <input v-model="editingStep.start_date" type="date" /> Start Date
+                    Start Date:
+                    <input v-model="newStepData.start_date" type="date" /> 
                  </label>
                  <label>
-                    <input v-model="editingStep.end_date" type="date" /> End Date
+                    End Date:
+                    <input v-model="newStepData.end_date" type="date" />
                  </label>
                 <label>
-                    <input type="checkbox" v-model="editingStep.completed" /> Completed
+                    Completed:
+                    <input type="checkbox" v-model="newStepData.completed" /> 
                 </label>
                 <button type="submit">Save</button>
-                <button @click="deleteStep(editingStep.id)" v-if="editingStep.id">Delete</button>
             </form>
         </Modal>
 
@@ -90,7 +108,7 @@ export default {
         return {
             userId: '',
             isEditProjectMopen: false,
-            isEditStepModalOpen: false,
+            isAddStepModalOpen: false,
             isEditMaterialModalOpen: false,
             editingStep: null,
             editingMaterial: null,
@@ -100,6 +118,12 @@ export default {
                 status: 0,
                 steps: [],
                 materials: []
+            },
+            newStepData: {
+            description: '',
+            start_date: '',
+            end_date: '',
+            completed: false
             },
             error: null
         }
@@ -128,9 +152,9 @@ export default {
         openEditProjectModal() {
             this.isEditProjectModalOpen = true
         },
-        openEditStepModal(step) {
-            this.editingStep = step || { description: '', start_date: '', end_date: '', completed: false }
-            this.isEditStepModalOpen = true
+        openAddStepModal(step) {
+            this.addingStep = step || { description: '', start_date: '', end_date: '', completed: false }
+            this.isAddStepModalOpen = true
         },
         openEditMaterialModal(material) {
             this.editingMaterial = material || { name: '' }
@@ -164,7 +188,32 @@ export default {
                 console.error('Error deleting step:', error)
             }
         },
-        saveStep() {},
+        async addStep(newStepData) {
+            try {
+                const projectId = this.project.id
+                console.log('Project id in addStep method:', projectId)
+                const token = localStorage.getItem('authToken')
+                const response = await api.addStep(projectId, newStepData, token)
+                this.project.steps.push(response.data)
+                this.isAddStepModalOpen = false
+                this.newStepData = { description: '', start_date: '', end_date: '', completed: false }
+            } catch (error) {
+                console.error('Error adding step:', error)
+                this.error = "Failed to add step. Please try again."
+
+            }
+        },
+        async updateStep(step) {
+            try {
+                const projectId = this.project.id
+                const token = localStorage.getItem('authToken')
+                const response = await api.updateStep(projectId, step.id, step, token)
+                const index = this.project.steps.findIndex(s => s.id === step.id)
+            } catch (error) {
+                console.error('Error updating step:', error)
+                this.error = "Failed to update step. Please try again."
+            }
+        },
         saveMaterial() {},
         // async updateProject() {
         //     try {

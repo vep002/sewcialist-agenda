@@ -6,6 +6,7 @@
     <GanttChart :tasks="tasks" />
     <hr>
     <button @click="handleLogout">Logout</button>
+    <h1>Your Projects</h1>
     <ul>
       <li v-for="project in projects" :key="project.id" :project="project">
         <p>{{ project.name }}</p>
@@ -23,6 +24,17 @@
         <button @click="deleteProject(project.id)">Delete</button>
       </li>
     </ul>
+    <div>
+      <h1>Your Materials Inventory</h1>
+      <ul>
+        <li v-for="material in materials" :key="material.id" :material="material">
+          <p>{{ material.name }}</p>
+          <p>{{ material.quantity }}</p>
+          <p>{{ material.unit }}</p>
+          <button @click="deleteMaterial(material.id)">Delete Material</button>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -35,12 +47,14 @@ export default {
     return {
       projects: [],
       error: null,
-      tasks: []
+      tasks: [],
+      materials: []
     }
   },
     mounted() {
         // Fetch projects for the user using the userId prop
         this.fetchProjects()
+        this.fetchMaterials()
     },
     methods: {
       async handleLogout() {
@@ -65,6 +79,17 @@ export default {
           }
         } catch (error) {
           console.error('Error fetching projects: ', error)
+        }
+      },
+      async fetchMaterials() {
+        try {
+          const token = localStorage.getItem('authToken')
+          if(token) {
+            const response = await api.getMaterials(token)
+            this.materials = response.data
+          }
+        } catch (error) {
+          console.error('Error fetching materials: ', error)
         }
       },
       prepareTasks() {
@@ -96,6 +121,16 @@ export default {
       editProject(projectId) {
         console.log('Editing project with ID:', projectId); 
         this.$router.push(`/projects/${projectId}`)
+      },
+      async deleteMaterial(materialId) {
+        try {
+          const token = localStorage.getItem('authToken')
+          await api.deleteMaterial(materialId, token)
+          this.fetchMaterials() // Refresh the list of materials
+        } catch (error) {
+          this.error = 'Error deleting material: ' + error.response.data.message
+          console.error('Error deleting material:', error)
+        }
       }
     }
   }

@@ -41,7 +41,7 @@
                 </div>
             </li>
         </ul>
-        <button @click="openEditMaterialModal(null)">Edit Materials</button>
+        <button @click="openAddMaterialModal(null)">Add Materials</button>
 
         <Modal :isModalOpen="isEditProjectModalOpen" @close="closeModals">
             <form @submit.prevent="saveProject">
@@ -89,12 +89,25 @@
             </form>
         </Modal>
 
-        <Modal :isModalOpen="isEditMaterialModalOpen" @close="closeModals">
+        <Modal :isModalOpen="isAddMaterialModalOpen" @close="closeModals">
             <form @submit.prevent="saveMaterial">
-                <!-- Material Edit Form -->
-                <input v-model="editingMaterial.name" type="text" required />
-                <button type="submit">Save</button>
-                <button @click="deleteMaterial(editingMaterial.id)" v-if="editingMaterial.id">Delete</button>
+                <!-- Material Selection -->
+                 <div v-if="materialsInInventory.length > 0">
+                    <label for="existingMaterials">Choose from your inventory</label>
+                    <select v-model="selectedMaterialId">
+                        <option v-for="material in materialsInInventory" :key="material.id" :value="material.id">
+                            {{ material.name }}
+                        </option>
+                    </select>
+                    <p>Or</p>
+                 </div>
+                <!-- New Material Form -->
+                <label>
+                    New Material Name:
+                    <input v-model="newMaterialData.name" type="text" placeholder="Enter new material name"/>               
+                </label>
+
+                <button type="submit">Add Material</button>
             </form>
         </Modal> 
     </div>
@@ -102,6 +115,7 @@
 
 <script>
 import api from '@/services/api'
+import { ca } from 'vuetify/locale';
 
 export default {
     data() {
@@ -109,9 +123,7 @@ export default {
             userId: '',
             isEditProjectMopen: false,
             isAddStepModalOpen: false,
-            isEditMaterialModalOpen: false,
-            editingStep: null,
-            editingMaterial: null,
+            isAddMaterialModalOpen: false,
             project: {
                 title: '',
                 description: '',
@@ -125,12 +137,18 @@ export default {
             end_date: '',
             completed: false
             },
+            materialsInInventory: [],
+            selectedMaterialId: null,
+            newMaterialData: {
+                name: ''
+            },
             error: null
         }
     },
     async created() {
         // Fetch project for the user using the projectId prop
         await this.fetchProject()
+        await this.fetchUserMaterials()
     },
     methods: {
         backToProjectList() {
@@ -142,11 +160,25 @@ export default {
                 const projectId = this.$route.params.projectID
                 const response = await api.getProject(projectId, token)
                 this.project = response.data
+                console.log('Project:', this.project)
+                console.log('Project steps:', this.project.steps)
+                console.log('Project materials:', this.project.materials)
                 this.userId = response.data.user_id
                 console.log('UserId:', this.userId)
             } catch (error) {
                 this.error = 'Error fetching project: ' + error.response.data.message
                 console.error('Error fetching project:', error)
+            }
+        },
+        async fetchUserMaterials() {
+            try {
+                const token = localStorage.getItem('authToken')
+                const response = await api.getMaterials(token)
+                console.log('All materials in inventory:', response.data)
+                this.materialsInInventory = response.data
+            } catch (error) {
+                this.error = 'Error fetching materials: ' + error.response.data.message
+                console.error('Error fetching materials:', error)
             }
         },
         openEditProjectModal() {
@@ -156,14 +188,13 @@ export default {
             this.addingStep = step || { description: '', start_date: '', end_date: '', completed: false }
             this.isAddStepModalOpen = true
         },
-        openEditMaterialModal(material) {
-            this.editingMaterial = material || { name: '' }
-            this.isEditMaterialModalOpen = true
+        openAddMaterialModal() {
+            this.isAddMaterialModalOpen = true
         },
         closeModals() {
             this.isEditProjectModalOpen = false
-            this.isEditStepModalOpen = false
-            this.isEditMaterialModalOpen = false
+            this.isAddStepModalOpen = false
+            this.isAddMaterialModalOpen = false
         },
         async saveProject() {
             try {
@@ -214,18 +245,25 @@ export default {
                 this.error = "Failed to update step. Please try again."
             }
         },
-        saveMaterial() {},
-        // async updateProject() {
-        //     try {
-        //         const token = localStorage.getItem('authToken')
-        //         const projectId = this.$route.params.projectId
-        //         const response = await api.updateProject(projectId, this.project, token)
-        //         this.project = response.data
-        //     } catch (error) {
-        //         this.error = 'Error updating project: ' + error.response.data.message
-        //         console.error('Error updating project:', error)
-        //     }
-        // },
+        async saveMaterial() {
+            try{
+                const token = localStorage.getItem('authToken')
+                const projectId = this.project.id
+
+                if(this.selectedMaterialId) {
+                    await api.addExistingMaterialToProject(projectId, this.selectedMaterialId, token)
+                } else if(this.newMaterialData.name) {
+                    const response = await api.addNewMaterialToProject(projectId, this.newMaterialData, token)
+                    this.project.materials.push(response.data)
+                }
+                this.isAddMaterialModalOpen = false
+                this.newMaterialData = { name: '' }
+                this.selectedMaterialId = null
+            } catch (error) {
+                console.error('Error adding material:', error)
+                this.error = "Failed to add material. Please try again."
+            }
+        },
     }
 }
 </script>

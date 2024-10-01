@@ -31,6 +31,13 @@ const apiClient = axios.create({
                 }
             })
         },
+        getMaterials(token) {
+            return apiClient.get('/materials', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+        },
         getProject(projectId, token) {
             return apiClient.get(`/projects/${projectId}`, {
                 headers: {
@@ -77,5 +84,26 @@ const apiClient = axios.create({
               }
             })
         },
+        addExistingMaterialToProject(projectId, materialId, token) {
+            return apiClient.post(`projects/${projectId}/materials/${materialId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            })
+        },
+        addNewMaterialToProject(projectId, materialData, token) {
+            return apiClient.post(`projects/${projectId}/materials`, { material: materialData }, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            })
+        },
+        deleteMaterial() {
+            return apiClient.delete(`materials/${materialId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            })
+        }
 
     }

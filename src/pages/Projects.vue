@@ -29,9 +29,8 @@
       <ul>
         <li v-for="material in materials" :key="material.id" :material="material">
           <p>{{ material.name }}</p>
-          <p>{{ material.quantity }}</p>
-          <p>{{ material.unit }}</p>
-          <button @click="deleteMaterial(material.id)">Delete Material</button>
+          <label for="quantity">Quantity:</label>
+          <input type="number" id="quantity" v-model="material.quantity" min="0" @change="updateMaterial(material)">
         </li>
       </ul>
     </div>
@@ -130,6 +129,19 @@ export default {
         } catch (error) {
           this.error = 'Error deleting material: ' + error.response.data.message
           console.error('Error deleting material:', error)
+        }
+      },
+      async updateMaterial(material) {
+        const token = localStorage.getItem('authToken')
+
+        if (material.quantity === 0) {
+          await this.deleteMaterial(material.id)
+        } else {
+          try {
+            const response = await api.updateMaterial(material.id, { quantity: material.quantity }, token)
+          } catch (error) {
+            this.error = 'Error updating material: ' + error.response.data.message
+            console.error('Error updating material:', error)}
         }
       }
     }

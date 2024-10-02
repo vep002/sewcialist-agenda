@@ -38,10 +38,12 @@
             <li v-for="material in project.materials" :key="material.id">
                 <div>
                     <p>{{ material.name }}</p>
+                    <label for="quantity">Quantity:</label>
+                    <input type="number" id="quantity" v-model="material.quantity" min="0" @change="updateMaterial(material)">
                 </div>
             </li>
         </ul>
-        <button @click="openAddMaterialModal(null)">Add Materials</button>
+        <button @click="openAddMaterialModal()">Add Materials</button>
 
         <Modal :isModalOpen="isEditProjectModalOpen" @close="closeModals">
             <form @submit.prevent="saveProject">
@@ -90,12 +92,12 @@
         </Modal>
 
         <Modal :isModalOpen="isAddMaterialModalOpen" @close="closeModals">
-            <form @submit.prevent="saveMaterial">
+            <form @submit="saveMaterial">
                 <!-- Material Selection -->
                  <div v-if="materialsInInventory.length > 0">
                     <label for="existingMaterials">Choose from your inventory</label>
-                    <select v-model="selectedMaterialId">
-                        <option v-for="material in materialsInInventory" :key="material.id" :value="material.id">
+                    <select v-model="selectedMaterialData.name">
+                        <option v-for="material in materialsInInventory" :key="material.id" :value="material.name">
                             {{ material.name }}
                         </option>
                     </select>
@@ -106,6 +108,8 @@
                     New Material Name:
                     <input v-model="newMaterialData.name" type="text" placeholder="Enter new material name"/>               
                 </label>
+                <label for="quantity">Quantity</label>
+                <input id="quantity" v-model="newMaterialData.quantity" type="number">
 
                 <button type="submit">Add Material</button>
             </form>
@@ -138,7 +142,9 @@ export default {
             completed: false
             },
             materialsInInventory: [],
-            selectedMaterialId: null,
+            selectedMaterialData: {
+                name: '',
+            },
             newMaterialData: {
                 name: ''
             },
@@ -264,6 +270,19 @@ export default {
                 this.error = "Failed to add material. Please try again."
             }
         },
+        async updateMaterial(material) {
+        const token = localStorage.getItem('authToken')
+
+        if (material.quantity === 0) {
+          await this.deleteMaterial(material.id)
+        } else {
+          try {
+            const response = await api.updateMaterial(material.id, { quantity: material.quantity }, token)
+          } catch (error) {
+            this.error = 'Error updating material: ' + error.response.data.message
+            console.error('Error updating material:', error)}
+        }
+      }
     }
 }
 </script>

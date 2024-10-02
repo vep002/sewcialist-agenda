@@ -98,8 +98,15 @@ const apiClient = axios.create({
               }
             })
         },
-        deleteMaterial() {
+        deleteMaterial(materialId, token) {
             return apiClient.delete(`materials/${materialId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            })
+        },
+        updateMaterial(materialId, materialData, token) {
+            return apiClient.patch(`materials/${materialId}`, { material: materialData }, {
               headers: {
                 Authorization: `Bearer ${token}`
               }

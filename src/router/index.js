@@ -3,6 +3,7 @@ import SplashPage from '@/pages/SplashPage.vue'
 import LoginPage from '@/pages/Login.vue'
 import Projects from '@/pages/Projects.vue'
 import SingleProject from '@/pages/SingleProject.vue'
+import Materials from '@/pages/Materials.vue'
 
 
 const routes = [
@@ -25,6 +26,11 @@ const routes = [
     path: '/projects/:projectID',
     name: 'Project',
     component: SingleProject,
+  },
+  {
+    path: '/users/:userID/materials',
+    name: 'Materials',
+    component: Materials,
   }
 ]
 

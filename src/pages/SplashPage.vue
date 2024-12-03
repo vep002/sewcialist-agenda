@@ -1,12 +1,9 @@
 <template>
-    <v-container>
+    <v-container class="splash-container" fluid>
       <v-row justify="center">
         <v-col cols="12" md="8">
-          <v-card class="pa-4">
+          <v-card class="pa-4 form-card">
             <v-row>
-              <v-col cols="2">
-                <v-img :src="logo" alt="logo" class="logo"></v-img>
-              </v-col>
               <v-col cols="10">
                 <h1 class="headline">The Sewcialist Agenda</h1>
               </v-col>
@@ -15,11 +12,18 @@
               <v-col cols="12" md="6">
                 <h2>Create an Account</h2>
                 <p>Already registered? <router-link to="/login">Login</router-link></p>
+                <v-alert 
+                  v-model="showError" 
+                  type="error" 
+                  class="mb-4"
+                >
+                  {{ errorMessage }}
+                </v-alert>
                 <v-form @submit.prevent="handleSubmit">
-                  <v-text-field v-model="name" label="Username" required></v-text-field>
-                  <v-text-field v-model="email" label="Email" required></v-text-field>
-                  <v-text-field v-model="password" label="Password" type="password" required></v-text-field>
-                  <v-btn class="mt-4" color="primary" block @click="handleSubmit">Sign Up</v-btn>
+                  <v-text-field v-model="name" label="Username" required class="input-field"></v-text-field>
+                  <v-text-field v-model="email" label="Email" required class="input-field"></v-text-field>
+                  <v-text-field v-model="password" label="Password" type="password" required class="input-field"></v-text-field>
+                  <v-btn class="mt-4 signup-btn" block type="submit">Sign Up</v-btn>
                 </v-form>
               </v-col>
             </v-row>
@@ -33,6 +37,7 @@
   import api from '@/services/api'
   import logo from '@/assets/logo.png'
 
+
   export default {
     name: 'SplashPage',
     data() {
@@ -41,21 +46,41 @@
         email: '',
         password: '',
         logo,
+        showError: false,
+        errorMessage: '',
       }
     },
     methods: {
       async handleSubmit() {
+        this.showError = false;
+        this.errorMessage = '';
+
+        if (!this.name || !this.email || !this.password) {
+          console.log('there is no name, email, or password');
+          this.errorMessage = 'Please enter valid account information';
+          this.showError = true;
+          return;
+        }
+
         try {
           const user = {
             name: this.name,
             email: this.email,
             password: this.password,
           }
+          const userExists = await api.checkUserExists({name: this.name, email: this.email})
+          if (userExists.data.exists) {
+            console.log('user already exists');
+            this.errorMessage = 'User already exists';
+            this.showError = true;
+            return;
+          }
           const response = await api.register(user)
-          console.log('User registered: ', response.data)
           this.$router.replace('users/${userId}/projects')
         } catch (error) {
-          console.error('Error registering user: ', error)
+          this.errorMessage = 'Please enter valid account information';
+          this.showError = true;
+          console.error('Error signing in user: ', error);
         }
       }
     }
@@ -63,12 +88,6 @@
   </script>
   
   <style scoped>
-  .logo {
-    width: 50px;
-    height: 50px;
-  }
-  .headline {
-    font-size: 24px;
-    font-weight: bold;
-  }
+  @import '@/assets/styles/styles.css';
+
   </style>

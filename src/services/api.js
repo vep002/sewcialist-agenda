@@ -12,6 +12,10 @@ const apiClient = axios.create({
             return apiClient.post('/signup', { user })
         },
 
+        checkUserExists(user) {
+            return apiClient.post('/check_user_exists', user);
+        },
+
         login(user) {
             return apiClient.post('/login', { user })
         },
@@ -99,6 +103,7 @@ const apiClient = axios.create({
             })
         },
         deleteMaterial(materialId, token) {
+          console.log("Deleting material: ", materialId)
             return apiClient.delete(`materials/${materialId}`, {
               headers: {
                 Authorization: `Bearer ${token}`
@@ -106,6 +111,7 @@ const apiClient = axios.create({
             })
         },
         updateMaterial(materialId, materialData, token) {
+          console.log("Updating material: ", materialData)
             return apiClient.patch(`materials/${materialId}`, { material: materialData }, {
               headers: {
                 Authorization: `Bearer ${token}`

@@ -1,131 +1,82 @@
 <template>
-    <div>
-        <button @click="backToProjectList">Back to Project List</button>
-        <h1>{{  project.title  }}</h1>
-        <button @click="openEditProjectModal">Edit</button>
+    <div class="max-w-md m-auto py-10">
+        <AppHeader />
+        <v-btn @click="backToProjectList" class="back-btn">Back to Project List</v-btn>
+        <h1 class="headline">{{  project.title  }}</h1>
+        <v-btn @click="openEditProjectModal(null)" class="edit-btn">Edit Project Details</v-btn>
         <p>{{ project.description }}</p>
-        <p>{{ project.status }}</p>
+        <p>Status: {{ this.getStatusText(project.status)}}</p>
 
-        <h2>Steps</h2>
-        <ol>
-            <li v-for="step in project.steps" :key="step.id">
-                <form @submit.prevent="updateStep(step)">
-                    <label>
-                        Description:
-                        <input v-model="step.description" type="text" required/>
-                    </label>
-                    <label>
-                        Start Date:
-                        <input v-model="step.start_date" type="date" />
-                    </label>
-                    <label>
-                        End Date:
-                        <input v-model="step.end_date" type="date" />
-                    </label>
-                    <label>
-                        Completed:
-                        <input type="checkbox" v-model="step.completed" /> 
-                    </label>
-                    <button type="submit">Update Step</button>
-                </form>
-                <button @click="deleteStep(project.id, step.id)">Delete</button>
-            </li>
-        </ol>
-        <button @click="openAddStepModal(null)">Add Step</button>
+        <h2 class="subheadline">Steps</h2>
+        <v-list>
+            <v-list-item v-for="step in project.steps" :key="step.id">
+                <v-card class="pa-4 step-card">
+                    <v-form @submit.prevent="updateStep(step)">
+                        <v-text-field label="Description" v-model="step.description" required></v-text-field>
+                        <v-text-field label="Start Date" v-model="step.start_date" type="date"></v-text-field>
+                        <v-text-field label="End Date" v-model="step.end_date" type="date"></v-text-field>
+                        <v-checkbox label="Completed" v-model="step.completed"></v-checkbox>
+                        <v-btn type="submit">Update Step</v-btn>
+                    </v-form>
+                    <v-btn @click="deleteStep(project.id, step.id)">Delete Step</v-btn>
+                </v-card>
+            </v-list-item>
+        </v-list>
+        <v-btn @click="openAddStepModal(null)" class="add-step-btn">Add Step</v-btn>
 
-        <h2>Materials</h2>
-        <ul>
-            <li v-for="material in project.materials" :key="material.id">
-                <div>
+        <h2 class="subheadline">Materials</h2>
+        <v-list>
+            <v-list-item v-for="material in project.materials" :key="material.id">
+                <v-card class="pa-4 material-card">
                     <p>{{ material.name }}</p>
-                    <label for="quantity">Quantity:</label>
-                    <input type="number" id="quantity" v-model="material.quantity" min="0" @change="updateMaterial(material)">
-                </div>
-            </li>
-        </ul>
-        <button @click="openAddMaterialModal()">Add Materials</button>
+                    <v-text-field label="Quantity" v-model="material.quantity" type="number" min="0" @change="updateMaterial(material)" outlined dense></v-text-field>
+                </v-card>
+            </v-list-item>
+        </v-list>
+        <v-btn @click="openAddMaterialModal()" class="add-material-btn">Add Materials</v-btn>
 
         <Modal :isModalOpen="isEditProjectModalOpen" @close="closeModals">
-            <form @submit.prevent="saveProject">
-            <h1>Edit Project</h1>
-                <div>
-                    <label for="title">Project Title:</label>
-                    <input id="title" v-model="project.title" type="text" required>
-                </div>
-                <div>
-                    <label for="description">Project Description:</label>
-                    <textarea id="description" v-model="project.description" required></textarea>
-                </div>
-                <div>
-                    <label for="status">Project Status:</label>
-                    <select id="status" v-model="project.status" required>
-                        <option value="0">Not Started</option>
-                        <option value="1">In Progress</option>
-                        <option value="2">Completed</option>
-                    </select>
-                </div>
-                <button type="submit">Save</button>
-            </form>
+            <v-form @submit.prevent="saveProject">
+                <h1 class="headline">Edit Project</h1>
+                <v-text-field label="Project Title" v-model="project.title" required></v-text-field>
+                <v-textarea label="Project Description" v-model="project.description" required></v-textarea>
+                <v-select label="Status" v-model="project.status" :items="['Not Started', 'In Progress', 'Completed']"></v-select>
+                <v-btn type="submit" class="save-btn">Save</v-btn>
+            </v-form>
         </Modal>
 
         <Modal :isModalOpen="isAddStepModalOpen" @close="closeModals">
-            <form @submit.prevent="addStep(newStepData)">
+            <v-form @submit.prevent="addStep(newStepData)">
+                <h1 class="headline">Add Step</h1>
                 <!-- Step Edit Form -->
-                 <label>
-                    Description:
-                    <input v-model="newStepData.description" type="text" required/> 
-                 </label>
-                 <label>
-                    Start Date:
-                    <input v-model="newStepData.start_date" type="date" /> 
-                 </label>
-                 <label>
-                    End Date:
-                    <input v-model="newStepData.end_date" type="date" />
-                 </label>
-                <label>
-                    Completed:
-                    <input type="checkbox" v-model="newStepData.completed" /> 
-                </label>
-                <button type="submit">Save</button>
-            </form>
+                 <v-text-field label="Description" v-model="step.description" required></v-text-field>
+                 <v-text-field label="Start Date" v-model="step.start_date" type="date" required></v-text-field>
+                 <v-text-field label="End Date" v-model="step.end_date" type="date" required></v-text-field>
+                 <v-checkbox label="Completed" v-model="step.completed"></v-checkbox>
+                <v-btn type="submit" class="save-btn">Save</v-btn>
+            </v-form>
         </Modal>
 
         <Modal :isModalOpen="isAddMaterialModalOpen" @close="closeModals">
-            <form @submit="saveMaterial">
-                <!-- Material Selection -->
-                 <div v-if="materialsInInventory.length > 0">
-                    <label for="existingMaterials">Choose from your inventory</label>
-                    <select v-model="selectedMaterialData.name">
-                        <option v-for="material in materialsInInventory" :key="material.id" :value="material.name">
-                            {{ material.name }}
-                        </option>
-                    </select>
-                    <p>Or</p>
-                 </div>
-                <!-- New Material Form -->
-                <label>
-                    New Material Name:
-                    <input v-model="newMaterialData.name" type="text" placeholder="Enter new material name"/>               
-                </label>
-                <label for="quantity">Quantity</label>
-                <input id="quantity" v-model="newMaterialData.quantity" type="number">
-
-                <button type="submit">Add Material</button>
-            </form>
+            <v-form @submit="saveMaterial">
+                <h1 class="headline">Add Material</h1>
+                <v-select label="Choose from your inventory" v-if="materialsInInventory.length > 0" v-model="selectedMaterialData.name" :items="materialsInInventory.map(m=>m.name)"></v-select>
+                <v-text-field label="New Material Name" v-model="newMaterialData.name" required></v-text-field>
+                <v-text-field label="Quantity" v-model="newMaterialData.quantity" type="number" required></v-text-field>
+                <v-btn type="submit" class="save-btn">Save</v-btn> 
+            </v-form>
         </Modal> 
     </div>
 </template>
 
 <script>
 import api from '@/services/api'
-import { ca } from 'vuetify/locale';
 
 export default {
     data() {
         return {
             userId: '',
-            isEditProjectMopen: false,
+            isEditProjectModalOpen: false,
             isAddStepModalOpen: false,
             isAddMaterialModalOpen: false,
             project: {
@@ -155,6 +106,9 @@ export default {
         // Fetch project for the user using the projectId prop
         await this.fetchProject()
         await this.fetchUserMaterials()
+        console.log("Project modal open:", this.isEditProjectModalOpen)
+        console.log("Step modal open:", this.isAddStepModalOpen)
+        console.log("Material modal open:", this.isAddMaterialModalOpen)
     },
     methods: {
         backToProjectList() {
@@ -187,6 +141,14 @@ export default {
                 console.error('Error fetching materials:', error)
             }
         },
+        getStatusText (status) {
+        switch (status) {
+          case 0 : return 'Pending'
+          case 1 : return 'In Progress'
+          case 2 : return 'Completed'
+          default: return 'Unknown'
+        }
+      },
         openEditProjectModal() {
             this.isEditProjectModalOpen = true
         },
@@ -286,3 +248,81 @@ export default {
     }
 }
 </script>
+
+<style>
+@import '../assets/styles/styles.css';
+
+.max-w-md {
+  background-color: #f5f5dc;
+}
+
+.v-list {
+    background-color: #f5f5dc;
+}
+
+.headline {
+    font-size: 28px;
+    font-weight: bold;
+    color: #4e4e33;
+    margin-bottom: 20px;
+}
+
+.subheadline {
+    font-size: 22px;
+    font-weight: bold;
+    color: #4e4e33;
+    margin-top: 20px;
+}
+
+.v-btn {
+    background-color: #9caf88;
+    color: white;
+    margin: 10px 0;
+    border-radius: 5px;
+}
+
+.v-btn:hover {
+    background-color: #7a9c6e;
+}
+
+.v-text-field,
+.v-textarea,
+.v-select,
+.v-checkbox {
+    margin-bottom: 20px;
+}
+
+.step-card, .material-card {
+    background-color: #e4eedd;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.step-card:hover, .material-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.edit-btn,
+.add-step-btn,
+.add-material-btn,
+.back-btn {
+    background-color: #9caf88;
+    color: white;
+    margin: 10px 0;
+    border-radius: 5px;
+}
+
+.delete-btn {
+    background-color: #e57373;
+    color: white;
+}
+
+.update-btn, .save-btn {
+    background-color: #9caf88;
+    color: white;
+    margin-top: 20px;
+    border-radius: 5px;
+}
+</style>
